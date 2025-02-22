@@ -8,7 +8,7 @@
 
 // Define QUANTUM if not already defined (default time slice)
 #ifndef QUANTUM
-#define QUANTUM 10
+#define QUANTUM 4
 #endif
 
 // Global Round Robin queue.
@@ -52,17 +52,20 @@ void enqueueJobRR(char *job_name, int priority, int burst, int start_time, int d
  * Implements Round Robin scheduling with start time support.
  * It uses a simple linked-list queue where jobs are reinserted until completion.
  */
-void runSchedulerRR() {
+ void runSchedulerRR() {
     int current_time = 0;
     float total_waiting_time = 0;
     float total_turnaround_time = 0;
     float total_response_time = 0;
     int count = 0;
-    
-    while (rr_queue != NULL) {
-        // Determine the minimum start time among jobs in the queue.
+
+    // Keep a queue for jobs that need to be scheduled
+    Node *queue = rr_queue;
+
+    while (queue != NULL) {
+        // Check for the next ready job
         int min_start = -1;
-        Node *temp = rr_queue;
+        Node *temp = queue;
         while (temp != NULL) {
             if (min_start == -1 || temp->job->start_time < min_start)
                 min_start = temp->job->start_time;
@@ -70,35 +73,36 @@ void runSchedulerRR() {
         }
         if (current_time < min_start)
             current_time = min_start;
-        
-        // Dequeue the first job.
-        Node *currentNode = rr_queue;
-        rr_queue = rr_queue->next;
-        
-        // Record response time on first run.
+
+        // Dequeue the first job
+        Node *currentNode = queue;
+        queue = queue->next;
+
+        // Record first execution time as response time
         if ((currentNode->job->job_id & 0x100000) == 0) {
             total_response_time += (current_time - currentNode->job->start_time);
-            currentNode->job->job_id |= 0x100000; // Mark as started.
+            currentNode->job->job_id |= 0x100000;  // Mark as started
         }
-        
+
+        // Enforce quantum slicing
         int exec_time = (currentNode->job->burst > QUANTUM) ? QUANTUM : currentNode->job->burst;
         run(currentNode->job, exec_time);
         current_time += exec_time;
         currentNode->job->burst -= exec_time;
-        
+
+        // If job is not finished, reinsert at tail
         if (currentNode->job->burst > 0) {
-            // Reinsert the job at the tail.
             currentNode->next = NULL;
-            if (rr_queue == NULL) {
-                rr_queue = currentNode;
+            if (queue == NULL) {
+                queue = currentNode;
             } else {
-                Node *iter = rr_queue;
+                Node *iter = queue;
                 while (iter->next != NULL)
                     iter = iter->next;
                 iter->next = currentNode;
             }
         } else {
-            // Job finished.
+            // Job finished
             int turnaround_time = current_time - currentNode->job->start_time;
             int waiting_time = turnaround_time - originalBurstRR[currentNode->job->job_id & 0x0FFFFF];
             total_turnaround_time += turnaround_time;
@@ -109,9 +113,11 @@ void runSchedulerRR() {
             free(currentNode);
         }
     }
-    
+
+    // Print correct Round Robin scheduling metrics
     printf("\nRound Robin Scheduling Metrics:\n");
     printf("Average waiting time = %.2f\n", total_waiting_time / count);
     printf("Average turnaround time = %.2f\n", total_turnaround_time / count);
     printf("Average response time = %.2f\n", total_response_time / count);
 }
+
