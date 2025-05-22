@@ -78,9 +78,13 @@ int main(int argc, char *argv[]) {
             enqueueJobPriority(job_name, priority, burst, start_time, deadline);
         } else if (strcmp(scheduler_type, "priority_rr") == 0) {
             enqueueJobPriorityRR(job_name, priority, burst, start_time, deadline);
+        }else if (strcmp(scheduler_type, "stcf") == 0) {
+            enqueueJobSTCF(job_name, priority, burst, start_time, deadline);
+        } else if (strcmp(scheduler_type, "ss") == 0) {
+            enqueueJobSS(job_name, priority, burst, start_time, deadline);
         } else {
             printf("Error: Unknown scheduler type: %s\n", scheduler_type);
-            printf("Valid scheduler types: sjf, edf, fcfs, rr, priority, priority_rr\n");
+            printf("Valid scheduler types: sjf, edf, fcfs, rr, priority, priority_rr, stcf\n");
             fclose(fp);
             return 1;
         }
@@ -101,6 +105,10 @@ int main(int argc, char *argv[]) {
         runSchedulerPriority();
     } else if (strcmp(scheduler_type, "priority_rr") == 0) {
         runSchedulerPriorityRR();
+    } else if (strcmp(scheduler_type, "stcf") == 0) {
+        runSchedulerSTCF();
+    } else if (strcmp(scheduler_type, "ss") == 0) {
+        runSchedulerSS();
     }
 
     return 0;

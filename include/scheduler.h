@@ -25,4 +25,12 @@ void runSchedulerPriority();
 void enqueueJobPriorityRR(char *job_name, int priority, int burst, int start_time, int deadline);
 void runSchedulerPriorityRR();
 
+// Preemptive SJF (Shortest Time-to-Completion First)
+void enqueueJobSTCF(char *job_name, int priority, int burst, int start_time, int deadline);
+void runSchedulerSTCF();
+
+// SS (Stride sheduling by steps) scheduler
+void enqueueJobSS(char *job_name, int priority, int burst, int start_time, int deadline);
+void runSchedulerSS();
+
 #endif
